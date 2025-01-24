@@ -1,9 +1,13 @@
+{ pkgs, ... }:
 {
-  pkg = pkgs.caddy;
-  args = "run -c %CFG% --adapter caddyfile";
-  config = ''
-    http://*:8080 {
-    	respond "hello"
-    }
-  '';
+  # simplest possible concrete service definition
+  serviceDefs.caddy = {
+    pkg = pkgs.caddy;
+    args = "run -c %CFG% --adapter caddyfile";
+    config.text = ''
+      http://*:8888 {
+      	respond "hello"
+      }
+    '';
+  };
 }

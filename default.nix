@@ -1,68 +1,51 @@
+# import stage args
 {
-  use = pkgs: {
-    inherit pkgs;
-    __functor = self: shell: let
-      inherit (pkgs) writeText writeShellScriptBin;
-      inherit (pkgs.lib) getExe foldlAttrs;
-      inherit (builtins) hashString removeAttrs;
+  pkgs ? import <nixpkgs>,
+  shell ? pkgs.mkShell,
+  modules ? [ ],
+  ...
+}:
+# shell creation args
+{
+  services ? { },
+  imports ? [ ],
+  ...
+}@args:
+let
+  # filter ides args out
+  # for passthrough to mkShell
+  shellArgs = builtins.removeAttrs args [
+    "services"
+    "serviceDefs"
+    "imports"
+  ];
+  # include some premade services
+  baseModules = [ ./modules/redis.nix ];
+  # eval the config
+  eval = pkgs.lib.evalModules {
+    modules =
+      [
+        # ides
+        ./ides.nix
+        # service config and build params
+        (
+          { ... }:
+          {
+            inherit services;
+            _buildIdes.shellFn = shell;
+            _buildIdes.shellArgs = shellArgs;
+          }
+        )
+      ]
+      ++ baseModules
+      ++ modules
+      ++ imports;
 
-      noCC = shell.noCC or false;
+    specialArgs = {
+      inherit pkgs;
+    };
 
-      mkWorks = {
-        pkg,
-        args ? "",
-        config,
-        ext ? "",
-      }: let
-        bin = getExe pkg;
-
-        name = pkg.pname;
-        unitName = "shell-${name}-${cfgHash}";
-
-        cfgHash = hashString "sha256" config;
-        finalConf = writeText "config-${name}-${cfgHash}${ext}" config;
-
-        finalArgs = builtins.replaceStrings ["%CFG%"] [finalConf.outPath] args;
-      in {
-        runner = ''
-          echo "[ides]: Starting ${name}.."
-          systemd-run --user -G -u ${unitName} ${bin} ${finalArgs}
-        '';
-        cleaner = ''
-          echo "[ides]: Stopping ${name}.."
-          systemctl --user stop ${unitName}
-        '';
-      };
-
-      works =
-        foldlAttrs (acc: name: svc: let
-          pair = mkWorks svc;
-        in {
-          runners = acc.runners + pair.runner;
-          cleaners = acc.cleaners + pair.cleaner;
-        }) {
-          runners = "";
-          cleaners = "";
-        } (shell.services or {});
-
-      runners = writeShellScriptBin "ides" works.runners;
-      cleaners = writeShellScriptBin "et-tu" (works.cleaners
-        + ''
-          systemctl --user reset-failed
-        '');
-      restart = writeShellScriptBin "restart" "et-tu; ides";
-
-      final =
-        (removeAttrs shell ["services" "noCC"])
-        // {
-          nativeBuildInputs = (shell.nativeBuildInputs or []) ++ [runners cleaners restart];
-          shellHook = (shell.shellHook or "") + ''
-            ides
-          '';
-        };
-    in
-      if noCC
-      then self.pkgs.mkShellNoCC final
-      else self.pkgs.mkShell final;
+    class = "ides";
   };
-}
+in
+eval.config._buildIdes.shell

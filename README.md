@@ -1,7 +1,7 @@
 # ides
 ## idempotent devshell ephemeral services
 
-ides provides automatic idempotent launching of ephemeral services
+ides provides automated, idempotent launching of ephemeral services
 
 in your devshell,
 
@@ -31,83 +31,119 @@ right here, right now.
 
 
 ## the bottom line
-your dev environment now includes your service dependencies!
+your dev environment now reproducibly includes your service dependencies!
 
 
 ## how ?
 - bring ides into your nix expression (flake input/fetchGit)
-- set it up by invoking its `use` function on your nixpkgs instance
-- use `mkShell` like you normally would, but with *spicy extras*
+- import it
+  - optionally provide a `pkgs` instance, mkShell-like function, or ides modules
+- use ides like a normal `mkShell`, but with *spicy extras*
 - make sure you run `et-tu` before you log out!
 
 here's how:
 
-### service configuration (caddy.nix)
-```nix
-{
-  pkg = pkgs.caddy;
-  args = "run -c %CFG% --adapter caddyfile";
-  config = ''
-    http://*:8080 {
-    	respond "hello"
-    }
-  '';
-}
-```
-we template the provided config's path as %CFG% in the `args` option.
-
-### classic nix(tm)
+### classic nix(tm) ([shell.nix](example/shell.nix))
 ```nix
 let
-  pkgs = import <nixpkgs> {};
-  ides = import (fetchGit {
+  pkgs = import <nixpkgs> { };
+
+  ides = fetchGit {
     url = "https://git.atagen.co/atagen/ides";
-  });
-  mkShell = ides.use pkgs;
+  };
+
+  mkIdes = import ides {
+    # optional instantiation args
+    inherit pkgs;
+    shell = pkgs.mkShell.override {
+      stdenv = pkgs.stdenvNoCC;
+    };
+    modules = [ ];
+  };
 in
-  mkShell {
-    noCC = true;
-    services.caddy = import ./caddy.nix;
-  }
+mkIdes {
+  # ides-specific options
+  imports = [ ./caddy.nix ];
+  services.redis = {
+    enable = true;
+    port = 6889;
+    logLevel = "verbose";
+  };
+  # regular mkShell options
+  nativeBuildInputs = [ pkgs.hello ];
+  someEnv = "this";
+}
 ```
 
-### flake enjoyers
+### flake enjoyers ([flake.nix](example/flake.nix))
 ```nix
 {
   inputs = {
     ides.url = "git+https://git.atagen.co/atagen/ides";
   };
-  outputs = {
-    nixpkgs,
-    ides,
-    ...
-  }: let
-    pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    mkShell = ides.lib.use pkgs;
-  in {
-    devShells.x86_64-linux.default = mkShell {
-      noCC = true;
-      services = {
-        caddy = import ./caddy.nix;
+  outputs =
+    {
+      nixpkgs,
+      ides,
+      ...
+    }:
+    let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      mkIdes = import ides {
+        inherit pkgs;
+        shell = pkgs.mkShell.override {
+          stdenv = pkgs.stdenvNoCC;
+        };
+        modules = [ ];
+      };
+    in
+    {
+      devShells.x86_64-linux.default = mkIdes {
+        imports = [ ./caddy.nix ];
+        services.redis = {
+          enable = true;
+          port = 6889;
+          logLevel = "verbose";
+        };
+        nativeBuildInputs = [ pkgs.hello ];
+        someEnv = "this";
       };
     };
-  };
 }
 ```
 
-### options
-- `services: attrset of service configs`: set up your services for ides
-- `noCC: bool`: sets whether to use mkShell or mkShellNoCC
-- `...`: all other options are passed directly to mkShell as per usual
+### concrete service definition ([caddy.nix](example/caddy.nix))
+```nix
+{ pkgs, ... }:
+{
+  # as simple as possible
+  serviceDefs.caddy = {
+    pkg = pkgs.caddy;
+    # ides injects the config path whereever %CFG% is used in `args`
+    args = "run -c %CFG% --adapter caddyfile";
+    config.text = ''
+      http://*:8888 {
+      	respond "hello"
+      }
+    '';
+  };
+}
+```
+here, we use a simple plaintext config, but ides also supports converting
+attribute sets into the following formats (via `config.content` & `config.format`):
+- `json`
+- `yaml`
+- `toml`
+- `ini`
+- `xml`
+- `php`
+- `java`
 
-#### service config attributes
- - `pkg`: the package to launch as a service
- - `args`: the arguments to the service. writing `%CFG%` in this will template to your config location
- - `ext`: in case your service is picky about its file extension, set it here
- - `config`: your service config.
+### writing a service module
+see [the provided redis module](modules/redis.nix) for an example
 
-if plaintext isn't your thing, check out pkgs.writers and lib.generators
-for ways to generate json, yaml, etc from nix attribute sets.
+### more detail
+for fully commented examples, see [here](example)
 
 ### cli
 in case you need manual control, an ides shell provides commands:
@@ -115,17 +151,6 @@ in case you need manual control, an ides shell provides commands:
 - `et-tu`: shut down the service set
 - `restart`: do both of the above in succession
 
-## why not reuse (nixpkgs/hm/...) module system ?
-ides was originally conceived with this in mind, but in practice,
-it is rather difficult to decouple the module systems from the
-deployments they are intended to fulfill.
+### documentation
+see [module docs](docs.md)
 
-occasional prodding is ongoing, and some activity appears to have
-begin in nixpkgs to modularise services, which would allow ides
-to take full advantage of the enormous nixos ecosystem.
-
-## acknowledgements
-- me
-- bald gang
-- nixpkgs manual authors
-- devenv, for the idea of flake services
