@@ -1,5 +1,5 @@
 with import <nixpkgs> {};
-  {}: let
+  _: let
     eval = lib.evalModules {
       specialArgs = {inherit pkgs;};
       modules = [./ides.nix ./modules];

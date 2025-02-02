@@ -29,7 +29,7 @@ let
         ./ides.nix
         # service config and build params
         (
-          { ... }:
+          _:
           {
             inherit services;
             _buildIdes.shellFn = shell;

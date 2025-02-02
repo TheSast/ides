@@ -220,7 +220,7 @@
             in
             foldlAttrs
               (
-                acc: name: svc:
+                acc: _: svc:
                 let
                   pair = mkWorks svc;
                 in
@@ -247,7 +247,7 @@
 
           final =
             let
-              shellArgs = config._buildIdes.shellArgs;
+              inherit (config._buildIdes) shellArgs;
             in
             shellArgs
             // {

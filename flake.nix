@@ -1,6 +1,6 @@
 {
   outputs =
-    { ... }:
+    _:
     {
       lib = import ./default.nix;
       templates.default = {
