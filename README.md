@@ -152,5 +152,5 @@ in case you need manual control, an ides shell provides commands:
 - `restart`: do both of the above in succession
 
 ### documentation
-see [module docs](docs.md)
+see [module docs](docs/docs.md)
 
