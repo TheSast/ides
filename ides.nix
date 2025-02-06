@@ -32,6 +32,30 @@
               example = "run -c %CFG% --adapter caddyfile";
               default = "";
             };
+            socket = mkOption {
+              type = attrsOf (listOf str);
+              description = "List of socket options for the unit (see `man systemd.socket`) - supplied as a list due to some options allowing duplicates.";
+              example = {
+                ListenStream = [ "/run/user/1000/myapp.sock" ];
+              };
+              default = { };
+            };
+            path = mkOption {
+              type = attrsOf (listOf str);
+              description = "List of path options for the unit (see `man systemd.path`) - supplied as a list due to some options allowing duplicates.";
+              example = {
+                PathModified = [ "/some/path" ];
+              };
+              default = { };
+            };
+            timer = mkOption {
+              type = attrsOf (listOf str);
+              description = "List of timer options for the unit (see `man systemd.path`) - supplied as a list due to some options allowing duplicates.";
+              example = {
+                OnActiveSec = [ 50 ];
+              };
+              default = { };
+            };
             config = mkOption {
               description = "Options for setting the service's configuration.";
               default = { };
@@ -147,6 +171,9 @@
           args ? "",
           exec ? "",
           config,
+          path,
+          socket,
+          timer,
         }:
         let
           bin = if (exec == "") then pkgs.lib.getExe pkg else pkgs.lib.getExe' pkg exec;
@@ -185,10 +212,40 @@
             };
 
           finalArgs = builtins.replaceStrings [ "%CFG%" ] [ "${confFile}" ] args;
+          # flatten unit options into cli args
+          sdArgs =
+            let
+              inherit (pkgs.lib) foldlAttrs;
+              inherit (builtins) concatStringsSep;
+              convertToArgList =
+                prefix: name: values:
+                (map (inner: "${prefix} ${name}=${inner}") values);
+              writeArgListFor =
+                attrs: prefix:
+                if (attrs != { }) then
+                  concatStringsSep " " (
+                    foldlAttrs (
+                      acc: n: v:
+                      acc + (convertToArgList prefix n v) + " "
+                    ) "" attrs
+                  )
+                else
+                  "";
+            in
+            concatStringsSep " " [
+              (writeArgListFor socket "--socket-property")
+              (writeArgListFor path "--path-property")
+              (writeArgListFor timer "--timer-property")
+            ];
         in
         {
           inherit name bin;
           args = finalArgs;
+          inherit
+            bin
+            sdArgs
+            cfgArgs
+            ;
           unitName = "shell-${name}-${cfgHash}";
         }
       ) config.serviceDefs;
@@ -202,11 +259,13 @@
               unitName,
               bin,
               args,
+              cfgArgs,
+              sdArgs,
             }:
             {
               runner = ''
                 echo "[ides]: Starting ${name}.."
-                systemd-run --user -G -u ${unitName} ${bin} ${args}
+                systemd-run --user -G -u ${unitName} ${sdArgs} ${bin} ${cfgArgs}
               '';
               cleaner = ''
                 echo "[ides]: Stopping ${name}.."
