@@ -1,7 +1,28 @@
+## auto
+
+Whether to autostart ides services at devshell instantiation\.
+
+
+
+*Type:*
+boolean
+
+
+
+*Default:*
+` true `
+
+*Declared by:*
+ - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+
+
+
 ## serviceDefs
 
+
+
 Concrete service definitions, as per submodule options\.
-Please put service-related options into ` services ` instead, and use this to implement them\.
+Please put service-related options into ` options.services ` instead, and use this to implement those options\.
 
 
 
@@ -136,7 +157,7 @@ null or path
 
 
 *Example:*
-` /home/bolt/code/ides/configs/my-config.ini `
+` "./configs/my-config.ini" `
 
 *Declared by:*
  - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
@@ -258,6 +279,39 @@ string
 
 
 
+## serviceDefs\.\<name>\.path
+
+
+
+List of path options for the unit (see ` man systemd.path `) - supplied as a list due to some options allowing duplicates\.
+
+
+
+*Type:*
+attribute set of list of string
+
+
+
+*Default:*
+` { } `
+
+
+
+*Example:*
+
+```
+{
+  PathModified = [
+    "/some/path"
+  ];
+}
+```
+
+*Declared by:*
+ - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+
+
+
 ## serviceDefs\.\<name>\.pkg
 
 
@@ -273,6 +327,72 @@ package
 
 *Example:*
 ` "pkgs.caddy" `
+
+*Declared by:*
+ - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+
+
+
+## serviceDefs\.\<name>\.socket
+
+
+
+List of socket options for the unit (see ` man systemd.socket `) - supplied as a list due to some options allowing duplicates\.
+
+
+
+*Type:*
+attribute set of list of string
+
+
+
+*Default:*
+` { } `
+
+
+
+*Example:*
+
+```
+{
+  ListenStream = [
+    "/run/user/1000/myapp.sock"
+  ];
+}
+```
+
+*Declared by:*
+ - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+
+
+
+## serviceDefs\.\<name>\.timer
+
+
+
+List of timer options for the unit (see ` man systemd.path `) - supplied as a list due to some options allowing duplicates\.
+
+
+
+*Type:*
+attribute set of list of string
+
+
+
+*Default:*
+` { } `
+
+
+
+*Example:*
+
+```
+{
+  OnActiveSec = [
+    50
+  ];
+}
+```
 
 *Declared by:*
  - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
@@ -389,6 +509,27 @@ one of “debug”, “verbose”, “notice”, “warning”, “nothing”
 
 *Default:*
 ` "notice" `
+
+*Declared by:*
+ - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
+
+
+
+## services\.redis\.name
+
+
+
+The name ides uses for this service\.
+
+
+
+*Type:*
+string
+
+
+
+*Default:*
+` "redis" `
 
 *Declared by:*
  - [modules/redis\.nix](https://git.atagen.co/atagen/ides/modules/redis.nix)
