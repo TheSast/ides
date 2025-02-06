@@ -10,6 +10,7 @@
 {
   services ? { },
   imports ? [ ],
+  serviceDefs ? { },
   ...
 }@args:
 let
@@ -30,7 +31,7 @@ let
         ./ides.nix
         # service config and build params
         (_: {
-          inherit services auto;
+          inherit services serviceDefs auto;
           _buildIdes.shellFn = shell;
           _buildIdes.shellArgs = shellArgs;
         })
