@@ -3,6 +3,7 @@
   pkgs ? import <nixpkgs>,
   shell ? pkgs.mkShell,
   modules ? [ ],
+  auto ? true,
   ...
 }:
 # shell creation args
@@ -28,14 +29,11 @@ let
         # ides
         ./ides.nix
         # service config and build params
-        (
-          _:
-          {
-            inherit services;
-            _buildIdes.shellFn = shell;
-            _buildIdes.shellArgs = shellArgs;
-          }
-        )
+        (_: {
+          inherit services auto;
+          _buildIdes.shellFn = shell;
+          _buildIdes.shellArgs = shellArgs;
+        })
       ]
       ++ baseModules
       ++ modules

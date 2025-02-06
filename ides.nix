@@ -330,10 +330,20 @@
                 restart
               ];
               shellHook =
+                let
+                  autoRun =
+                    if config.auto then
+                      ''
+                        ides run
+                      ''
+                    else
+                      "";
+                in
                 (shellArgs.shellHook or "")
                 + ''
-                  ides
-                '';
+                  ides help
+                ''
+                + autoRun;
             };
         in
         config._buildIdes.shellFn final;
