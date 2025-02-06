@@ -80,7 +80,7 @@
                   file = mkOption {
                     type = nullOr path;
                     description = "Path to config file. This overrides all other values.";
-                    example = ./configs/my-config.ini;
+                    example = "./configs/my-config.ini";
                     default = null;
                   };
                   content = mkOption {
@@ -120,11 +120,17 @@
     {
       serviceDefs = mkOption {
         type = types.attrsOf serviceConfig;
-        description = "Concrete service definitions, as per submodule options.\nPlease put service-related options into `services` instead, and use this to implement them.";
+        description = "Concrete service definitions, as per submodule options.\nPlease put service-related options into `options.services` instead, and use this to implement those options.";
       };
 
-      # lol https://github.com/NixOS/nixpkgs/issues/293510
-      _module.args = lib.mkOption {
+      auto = mkOption {
+        type = types.bool;
+        description = "Whether to autostart ides services at devshell instantiation.";
+        default = true;
+      };
+
+      # to prevent generating docs for this option; see https://github.com/NixOS/nixpkgs/issues/293510
+      _module.args = mkOption {
         internal = true;
       };
 
@@ -140,6 +146,7 @@
   #
   config =
     let
+      # control flow monstrosity
       branchOnConfig =
         cfg:
         {
@@ -158,7 +165,7 @@
           else if (cfg.formatter != null) then
             contentFmt
           else
-            throw "`format` or `formatter` must be set for `content` ${cfg.content}!"
+            throw "`format` or `formatter` must be set for `content` value ${cfg.content}!"
         else
           "";
     in
@@ -176,12 +183,15 @@
           timer,
         }:
         let
+          # make our best effort to use the correct binary
           bin = if (exec == "") then pkgs.lib.getExe pkg else pkgs.lib.getExe' pkg exec;
+          # set file extension
           ext =
             if (config.ext != "") || (config.format != null) then "." + (config.ext or config.format) else "";
-          # we need this to create unit names that correspond to configs
+          # config hash for unique service names
           cfgHash =
             let
+              # method to hash a set
               hashContent = builtins.hashString "sha256" (builtins.toJSON config.content);
             in
             branchOnConfig config {
@@ -202,16 +212,18 @@
                 xml = pkgs.formats.xml { };
                 php = pkgs.formats.php { finalVariable = null; };
               };
+              # final config name
               confPath = "config-${name}-${cfgHash}${ext}";
             in
+            # write out config
             branchOnConfig config {
               text = pkgs.writeText confPath config.text;
               inherit (config) file;
               content = writers.${config.format}.generate confPath config.content;
               contentFmt = config.formatter confPath config.content;
             };
-
-          finalArgs = builtins.replaceStrings [ "%CFG%" ] [ "${confFile}" ] args;
+          # template the config path into the launch command
+          cfgArgs = builtins.replaceStrings [ "%CFG%" ] [ "${confFile}" ] args;
           # flatten unit options into cli args
           sdArgs =
             let
@@ -238,6 +250,7 @@
               (writeArgListFor timer "--timer-property")
             ];
         in
+        # transform into attrs that mkWorks expects to receive
         {
           inherit name bin;
           args = finalArgs;
@@ -253,6 +266,7 @@
       # generate service scripts and create the shell
       _buildIdes.shell =
         let
+          # create commands to run and clean up services
           mkWorks =
             {
               name,
