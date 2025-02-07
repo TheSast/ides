@@ -28,7 +28,7 @@ let
     modules =
       [
         # ides
-        ./ides.nix
+        ./lib/ides.nix
         # service config and build params
         (_: {
           inherit services serviceDefs auto;
