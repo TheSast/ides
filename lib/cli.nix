@@ -4,29 +4,69 @@
   works,
 }:
 let
-  runAll = foldlAttrs (
-    acc: name: works:
-    acc + "${works.runner}/bin/run\n"
-  ) "" works;
-  runFns = foldlAttrs (
+  statusFns = foldlAttrs (
     acc: name: works:
     acc
     + ''
-      function run-${name}() {
+      function status-${name}() {
+        ${works.status}/bin/status
+      }
+    ''
+  ) "" works;
+  statusAll =
+    ''
+      function status-all() {  
+    ''
+    + foldlAttrs (
+      acc: name: works:
+      acc + "${works.status}/bin/status\n"
+    ) "" works
+    + ''}'';
+  startAll =
+    ''
+      function start-all() {
+    ''
+    + foldlAttrs (
+      acc: name: works:
+      acc + "${works.runner}/bin/run\n"
+    ) "" works
+    + ''}'';
+  startFns = foldlAttrs (
+    acc: name: works:
+    acc
+    + ''
+      function start-${name}() {
         ${works.runner}/bin/run
       }
     ''
   ) "" works;
-  cleanAll = foldlAttrs (
-    acc: name: works:
-    acc + "${works.cleaner}/bin/clean\n"
-  ) "" works;
-  cleanFns = foldlAttrs (
+  stopAll =
+    ''
+      function stop-all() {
+    ''
+    + foldlAttrs (
+      acc: name: works:
+      acc + "${works.cleaner}/bin/clean\n"
+    ) "" works
+    + ''
+      }
+    '';
+  stopFns = foldlAttrs (
     acc: name: works:
     acc
     + ''
-      function clean-${name}() {
+      function stop-${name}() {
         ${works.cleaner}/bin/clean
+      }
+    ''
+  ) "" works;
+  restartFns = foldlAttrs (
+    acc: name: _:
+    acc
+    + ''
+      function restart-${name} {
+        stop-${name}
+        start-${name}      
       }
     ''
   ) "" works;
@@ -34,28 +74,52 @@ let
     acc: name: _:
     acc ++ [ name ]
   ) [ ] works;
+  mkCmd = desc: fn: synonyms: {
+    inherit desc fn synonyms;
+  };
+  actions = [
+    (mkCmd "start service" "start" [
+      "run"
+      "r"
+      "up"
+    ])
+    (mkCmd "stop service" "stop" [
+      "s"
+      "clean"
+      "et-tu"
+      "down"
+    ])
+    (mkCmd "restart a service" "restart" [
+      "qq"
+      "re"
+    ])
+    (mkCmd "show service status" "status" [
+      "stat"
+      "check"
+      "ch"
+    ])
+  ];
+  actionHelp = builtins.concatStringsSep "\n" (
+    map (cmd: ''
+      \t${cmd.fn}\t\tsynonyms: ${builtins.concatStringsSep " " cmd.synonyms}
+      \t- ${cmd.desc}
+    '') actions
+  );
   help = ''
     [ides]: use "ides [action] [target]" to control services.
     actions: 
-      start             synonyms: run r       
-      - start a service
+    ${actionHelp}
 
-      stop              synonyms: s clean et-tu
-      - stop a service
+    \ttargets           synonyms: t
+    \t- print a list of available targets
 
-      restart           synonyms: qq
-      - stop and then restart all services
+    \thelp
+    \t- print this helpful information
 
-      targets           synonyms: t
-      - print a list of available targets
+    target names are the same as the attribute name used to define a service.
+    eg. value of service.*.name, or serviceDefs.{name}
 
-      help
-      - print this helpful information
-
-    target names are the same as the attribute used to define a service.
     an empty target will execute the action on all available services.
-
-    current targets:
   '';
 in
 writeShellScriptBin "ides" ''
@@ -63,7 +127,6 @@ writeShellScriptBin "ides" ''
 
   function print-help() {
     printf '${help}'
-    list-targets
   }
 
   function list-targets() {
@@ -81,16 +144,23 @@ writeShellScriptBin "ides" ''
     printf $found
   }
 
-  ${runFns}
+  ${statusFns}
 
-  function run-all() {
-    ${runAll}
-  }
+  ${statusAll}
 
-  ${cleanFns}
+  ${startFns}
 
-  function clean-all() {
-    ${cleanAll}
+  ${startAll}
+
+  ${stopFns}
+
+  ${stopAll}
+
+  ${restartFns}
+
+  function restart-all() {
+    stop-all
+    start-all
   }
 
   function action() {
@@ -110,18 +180,14 @@ writeShellScriptBin "ides" ''
   }
 
   case $1 in 
-    start|run|r)
-      shift
-      action run $@
-    ;;
-    clean|stop|et-tu|s)
-      shift
-      action clean $@
-    ;;
-    restart|qq)
-      clean-all
-      run-all
-    ;;
+    ${builtins.concatStringsSep "\n" (
+      map (action: ''
+        ${action.fn}|${builtins.concatStringsSep "|" action.synonyms})
+          shift
+          action ${action.fn} $@
+        ;;
+      '') actions
+    )}
     targets|t)
       list-targets
     ;;
