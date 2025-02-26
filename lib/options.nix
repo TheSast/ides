@@ -125,6 +125,12 @@
         default = true;
       };
 
+      monitor = mkOption {
+        type = types.either types.bool types.int;
+        description = "Enable, or set timeout period for, monitoring devshell activity and automatically destroy services after (experimental).";
+        default = true;
+      };
+
       # to prevent generating docs for this option; see https://github.com/NixOS/nixpkgs/issues/293510
       _module.args = mkOption {
         internal = true;

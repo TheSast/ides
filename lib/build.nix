@@ -157,6 +157,16 @@
             inherit (pkgs.lib) foldlAttrs;
             inherit works;
           };
+          # shell id is based on the services config
+          shellId = builtins.hashString "sha256" (builtins.toJSON config._buildIdes.finalServices);
+          monitor = import ./monitor.nix {
+            inherit (pkgs) writeShellScriptBin;
+            inherit shellId;
+            cli = pkgs.lib.getExe cli;
+            socat = pkgs.lib.getExe pkgs.socat;
+            # TODO make this timeout more lenient?
+            timeout = if (pkgs.lib.typeOf config.monitor == "int") then config.monitor else 20;
+          };
 
           # create the ides shell
           final =
@@ -177,14 +187,28 @@
                       ''
                     else
                       "";
+                  monitorRun =
+                    let
+                      inherit (pkgs.lib) getExe;
+                    in
+                    if config.monitor then
+                      ''
+                        systemd-run --user -q -G -u ides-${shellId}-monitor ${getExe monitor.daemon} $PWD
+                        ${getExe monitor.client} $$
+                      ''
+                    else
+                      "";
                 in
                 (shellArgs.shellHook or "")
                 + ''
                   printf '[ides]: use "ides [action] [target]" to control services. type "ides help" to find out more.\n'
+                  export IDES_CTL="/run/user/$(id -u)/ides-${shellId}.sock"
                 ''
-                + autoRun;
+                + autoRun
+                + monitorRun;
             };
         in
+        # TODO make this optionally return the shell components to allow composability with other dev shell solutions
         config._buildIdes.shellFn final;
     };
 
