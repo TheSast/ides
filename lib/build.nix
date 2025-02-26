@@ -136,11 +136,14 @@
             {
               runner = pkgs.writeShellScriptBin "run" ''
                 echo "[ides]: starting ${name}.."
-                systemd-run --user -G -u ${unitName} ${sdArgs} ${bin} ${cfgArgs}
+                systemd-run --user -q -G -u ${unitName} ${sdArgs} ${bin} ${cfgArgs}
               '';
               cleaner = pkgs.writeShellScriptBin "clean" ''
                 echo "[ides]: stopping ${name}.."
-                systemctl --user stop ${unitName}
+                systemctl --user -q stop ${unitName}
+              '';
+              status = pkgs.writeShellScriptBin "status" ''
+                systemctl --user -q status ${unitName}
               '';
             };
 
