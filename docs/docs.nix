@@ -4,7 +4,7 @@ let
   eval = lib.evalModules {
     specialArgs = { inherit pkgs; };
     modules = [
-      ../ides.nix
+      ../lib/ides.nix
       ../modules
     ];
   };

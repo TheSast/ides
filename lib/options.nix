@@ -127,7 +127,7 @@
 
       monitor = mkOption {
         type = types.either types.bool types.int;
-        description = "Enable, or set timeout period for, monitoring devshell activity and automatically destroy services after (experimental).";
+        description = "Enable, or set timeout period for, monitoring devshell activity and automatically destroying services after (experimental).";
         default = true;
       };
 

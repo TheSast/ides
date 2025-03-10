@@ -13,7 +13,28 @@ boolean
 ` true `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
+
+
+
+## monitor
+
+
+
+Enable, or set timeout period for, monitoring devshell activity and automatically destroying services after (experimental)\.
+
+
+
+*Type:*
+boolean or signed integer
+
+
+
+*Default:*
+` true `
+
+*Declared by:*
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -30,7 +51,7 @@ Please put service-related options into ` options.services ` instead, and use th
 attribute set of (submodule)
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -56,7 +77,7 @@ string
 ` "run -c %CFG% --adapter caddyfile" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -77,7 +98,7 @@ submodule
 ` { } `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -108,7 +129,7 @@ null or (attribute set)
 ```
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -134,7 +155,7 @@ string
 ` "json" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -147,7 +168,7 @@ Path to config file\. This overrides all other values\.
 
 
 *Type:*
-null or path
+null or absolute path
 
 
 
@@ -160,7 +181,7 @@ null or path
 ` "./configs/my-config.ini" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -188,7 +209,7 @@ null or one of “java”, “json”, “yaml”, “toml”, “ini”, “xml
 ` "json" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -216,7 +237,7 @@ anything
 ` "pkgs.formats.yaml {}.generate" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -249,7 +270,7 @@ string
 ```
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -275,7 +296,7 @@ string
 ` "caddy" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -308,7 +329,7 @@ attribute set of list of string
 ```
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -329,7 +350,7 @@ package
 ` "pkgs.caddy" `
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -362,7 +383,7 @@ attribute set of list of string
 ```
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
@@ -395,7 +416,7 @@ attribute set of list of string
 ```
 
 *Declared by:*
- - [ides\.nix](https://git.atagen.co/atagen/ides/ides.nix)
+ - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
 
 
 
