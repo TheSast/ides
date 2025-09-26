@@ -10,6 +10,7 @@
       _buildIdes.finalServices = builtins.mapAttrs (
         name:
         {
+          setup ? "",
           cmd,
           path,
           socket,
@@ -48,6 +49,7 @@
         {
           inherit
             sdArgs
+            setup
             cmd
             ;
           unitName = "shell-${name}-${cfgHash}";
@@ -63,13 +65,28 @@
             {
               unitName,
               sdArgs,
+              setup, 
               cmd,
             }:
             {
-              runner = pkgs.writeShellScriptBin "run" ''
-                echo "[ides]: starting ${name}.."
-                systemd-run --user -q -G -u ${unitName} ${sdArgs} ${cmd}
-              '';
+              runner = pkgs.writeShellScriptBin "run" (
+                (
+                  if setup != ""
+                  then
+                    # sh
+                    # TODO: silence setup output by default with option to show it
+                    ''
+                      echo "[ides]: setting up ${name}"
+                      ${setup}''
+                  else ""
+                )
+              +
+                # sh
+                ''
+                  echo "[ides]: starting ${name}.."
+                  systemd-run --user -q -G -u ${unitName} ${sdArgs} ${cmd}
+                ''
+              );
               cleaner = pkgs.writeShellScriptBin "clean" ''
                 echo "[ides]: stopping ${name}.."
                 systemctl --user -q stop ${unitName}

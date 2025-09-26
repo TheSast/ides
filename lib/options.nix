@@ -11,6 +11,12 @@
         with types;
         submodule {
           options = {
+            setup = mkOption {
+              type = str;
+              description = "Script to run every time before the service is started";
+              example = "mkdir -p /some/path/required/by/service";
+              default = "";
+            };
             cmd = mkOption {
               type = str;
               description = "Command to supply to the service.";
