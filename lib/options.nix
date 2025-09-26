@@ -11,21 +11,10 @@
         with types;
         submodule {
           options = {
-            pkg = mkOption {
-              type = package;
-              description = "Package to use for service.";
-              example = "pkgs.caddy";
-            };
-            exec = mkOption {
+            cmd = mkOption {
               type = str;
-              description = "Alternative executable name to use from `pkg`.";
-              example = "caddy";
-              default = "";
-            };
-            args = mkOption {
-              type = str;
-              description = "Arguments to supply to the service binary. Writing %CFG% in this will template to your config location.";
-              example = "run -c %CFG% --adapter caddyfile";
+              description = "Command to supply to the service.";
+              example = "\${pkgs.lib.getExe pkgs.caddy} run -c \${writeText \"config\" cfg.extraConfig} --adapter caddyfile";
               default = "";
             };
             socket = mkOption {
@@ -51,64 +40,6 @@
                 OnActiveSec = [ 50 ];
               };
               default = { };
-            };
-            config = mkOption {
-              description = "Options for setting the service's configuration.";
-              default = { };
-              type = submodule {
-                options = {
-                  text = mkOption {
-                    type = str;
-                    default = "";
-                    description = "Plaintext configuration to use.";
-                    example = ''
-                      http://*:8080 {
-                        respond "hello"
-                      }
-                    '';
-                  };
-                  ext = mkOption {
-                    type = str;
-                    default = "";
-                    description = "If your service config requires a file extension, set it here. This overrides `format`'s output path'.";
-                    example = "json";
-                  };
-                  file = mkOption {
-                    type = nullOr path;
-                    description = "Path to config file. This overrides all other values.";
-                    example = "./configs/my-config.ini";
-                    default = null;
-                  };
-                  content = mkOption {
-                    type = nullOr attrs;
-                    description = "Attributes that define your config values.";
-                    default = null;
-                    example = {
-                      this = "that";
-                    };
-                  };
-                  format = mkOption {
-                    type = nullOr (enum [
-                      "java"
-                      "json"
-                      "yaml"
-                      "toml"
-                      "ini"
-                      "xml"
-                      "php"
-                    ]);
-                    description = "Config output format.\nOne of:\n`java json yaml toml ini xml php`.";
-                    example = "json";
-                    default = null;
-                  };
-                  formatter = mkOption {
-                    type = types.anything;
-                    description = "Serialisation/writer function to apply to `content`.\n`format` will auto-apply the correct format if the option value is valid.\nShould take `path: attrs:` and return a storepath.";
-                    example = "pkgs.formats.yaml {}.generate";
-                    default = null;
-                  };
-                };
-              };
             };
           };
         };

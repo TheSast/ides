@@ -55,11 +55,11 @@ attribute set of (submodule)
 
 
 
-## serviceDefs\.\<name>\.args
+## serviceDefs\.\<name>\.cmd
 
 
 
-Arguments to supply to the service binary\. Writing %CFG% in this will template to your config location\.
+Command to supply to the service\.
 
 
 
@@ -74,7 +74,7 @@ string
 
 
 *Example:*
-` "run -c %CFG% --adapter caddyfile" `
+` "\${pkgs.lib.getExe pkgs.caddy} run -c \${writeText \"config\" cfg.extraConfig} --adapter caddyfile" `
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
@@ -327,27 +327,6 @@ attribute set of list of string
   ];
 }
 ```
-
-*Declared by:*
- - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)
-
-
-
-## serviceDefs\.\<name>\.pkg
-
-
-
-Package to use for service\.
-
-
-
-*Type:*
-package
-
-
-
-*Example:*
-` "pkgs.caddy" `
 
 *Declared by:*
  - [lib/options\.nix](https://git.atagen.co/atagen/ides/lib/options.nix)

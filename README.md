@@ -118,26 +118,18 @@ mkIdes {
 {
   # as simple as possible
   serviceDefs.caddy = {
-    pkg = pkgs.caddy;
-    # ides injects the config path whereever %CFG% is used in `args`
-    args = "run -c %CFG% --adapter caddyfile";
-    config.text = ''
-      http://*:8888 {
-      	respond "hello"
-      }
-    '';
+    cmd = 
+      let 
+        config = writeText "config" ''
+          http://*:8888 {
+      	    respond "hello"
+          }
+        '';
+      in
+      "${pkgs.lib.getExe pkgs.caddy} run -c ${config} --adapter caddyfile";
   };
 }
 ```
-here, we use a simple plaintext config, but ides also supports converting
-attribute sets into the following formats (via `config.content` & `config.format`):
-- `json`
-- `yaml`
-- `toml`
-- `ini`
-- `xml`
-- `php`
-- `java`
 
 ### writing a service module
 see [the provided redis module](modules/redis.nix) for an example
