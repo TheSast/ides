@@ -85,18 +85,52 @@
                 # sh
                 ''
                   echo "[ides]: starting ${name}.."
-                  systemd-run --user -q -G -u ${unitName} ${sdArgs} ${cmd}
+                  if command -v systemd-run >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+                      systemd-run --user -q -G -u ${unitName} ${sdArgs} ${cmd}
+                  else
+                      RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+                      PID_FILE="$RUNTIME_DIR/${unitName}.pid"
+                      LOG_FILE="$RUNTIME_DIR/${unitName}.log"
+                      if [ -f "$PID_FILE" ] && kill -0 "`cat "$PID_FILE"`" 2>/dev/null; then
+                          echo "Service ${unitName} already running (PID `cat "$PID_FILE"`)"
+                          exit 0
+                      fi
+                      nohup sh -c "${cmd}" > "$LOG_FILE" 2>&1 &
+                      echo "$!" > "$PID_FILE"
+                      echo "Started service ${unitName} with PID $!"
+                  fi
                 ''
               );
               cleaner = pkgs.writeShellScriptBin "clean" ''
                 echo "[ides]: stopping ${name}.."
-                systemctl --user -q stop ${unitName}
+                if command -v systemd-run >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+                    systemctl --user -q stop ${unitName}
+                else
+                    RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+                    PID_FILE="$RUNTIME_DIR/${unitName}.pid"
+                    if [ -f "$PID_FILE" ]; then
+                        kill "`cat "$PID_FILE"`" 2>/dev/null
+                        rm -f "$PID_FILE"
+                        echo "Stopped service ${unitName}"
+                    else
+                        echo "Service ${unitName} not running"
+                    fi
+                fi
               '';
               status = pkgs.writeShellScriptBin "status" ''
-                systemctl --user -q status ${unitName}
-              '';
-              expose = pkgs.writeShellScriptBin "expose" ''
-                echo ${cmd}
+                if command -v systemd-run >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+                    systemctl --user -q status ${unitName}
+                else
+                    RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/tmp}"
+                    PID_FILE="$RUNTIME_DIR/${unitName}.pid"
+                    LOG_FILE="$RUNTIME_DIR/${unitName}.log"
+                    if [ -f "$PID_FILE" ] && kill -0 "`cat "$PID_FILE"`" 2>/dev/null; then
+                        echo "Service ${unitName} is running (PID `cat "$PID_FILE"`)"
+                        echo "Logs available at $LOG_FILE "
+                    else
+                        echo "Service ${unitName} is not running"
+                    fi
+                fi
               '';
             };
 
