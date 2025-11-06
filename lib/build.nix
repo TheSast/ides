@@ -95,6 +95,9 @@
               status = pkgs.writeShellScriptBin "status" ''
                 systemctl --user -q status ${unitName}
               '';
+              expose = pkgs.writeShellScriptBin "expose" ''
+                echo ${cmd}
+              '';
             };
 
           works = pkgs.lib.mapAttrs (

@@ -70,6 +70,24 @@ let
       }
     ''
   ) "" works;
+  exposeFns = foldlAttrs (
+    acc: name: works:
+    acc
+    + ''
+      function expose-${name}() {
+        ${works.expose}/bin/expose
+      }
+    ''
+  ) "" works;
+  exposeAll =
+    ''
+      function expose-all() {  
+    ''
+    + foldlAttrs (
+      acc: name: works:
+      acc + "${works.expose}/bin/expose\n"
+    ) "" works
+    + ''}'';
   names = foldlAttrs (
     acc: name: _:
     acc ++ [ name ]
@@ -98,6 +116,9 @@ let
       "check"
       "ch"
     ])
+    (mkCmd "expose underlying command" "expose" [
+      "e"
+    ])
   ];
   actionHelp = builtins.concatStringsSep "\n" (
     map (cmd: ''
@@ -109,7 +130,6 @@ let
     [ides]: use "ides [action] [target]" to control services.
     actions: 
     ${actionHelp}
-
     \ttargets           synonyms: t
     \t- print a list of available targets
 
@@ -155,6 +175,10 @@ writeShellScriptBin "ides" ''
   ${stopFns}
 
   ${stopAll}
+
+  ${exposeFns}
+
+  ${exposeAll}
 
   ${restartFns}
 
